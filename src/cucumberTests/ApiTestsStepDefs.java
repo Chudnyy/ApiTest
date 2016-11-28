@@ -5,14 +5,14 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import gherkin.deps.com.google.gson.JsonArray;
 import gherkin.deps.com.google.gson.JsonElement;
-import gherkin.deps.com.google.gson.JsonObject;
 import gherkin.deps.com.google.gson.JsonParser;
 import gherkin.deps.com.google.gson.stream.JsonReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by oleksandrchudnyi on 11/28/16.
@@ -37,31 +37,77 @@ public class ApiTestsStepDefs {
 //        throw new PendingException();
     }
 
+
+    final static String NAME = "name";
+    final static String ALPHA2CODE = "alpha2_code";
+    final static String ALPHA3CODE = "alpha3_code";
+    final static String ALL = "all";
+    final static String GET = "GET";
+    final static String baseURL = "http://services.groupkt.com/country/get/";
+    final static String RESTRESPONSE = "RestResponse";
+    final static String RESULT = "result";
+    final static String MESSAGES = "messages";
+
     protected void request() throws IOException {
 
-        String alpha2Code = "alpha2_code";
-        String alpha3Code = "alpha3_code";
-        String URL = "http://services.groupkt.com/country/get/all";
 
-        URL url = new URL(URL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+        HttpURLConnection connection = initHttpURLConnection(ALL, GET, baseURL);
+
         System.out.println(connection.getResponseCode() + connection.getResponseMessage());
 
-        JsonElement jsonElement = new JsonParser().parse(new JsonReader(rd));
-        System.out.println(jsonElement.toString());
+        JsonElement responseBody = getResponseBody(connection);
+        System.out.println(responseBody.toString());
 
-        JsonArray jsonArray = jsonElement.getAsJsonObject().get("RestResponse").getAsJsonObject().get("result").getAsJsonArray();
-        System.out.println(jsonArray.toString());
+        JsonArray resultsList = getResultsList(responseBody);
+        System.out.println(resultsList.toString());
 
-        JsonElement countryInfo = jsonArray.get(1);
-        System.out.println(countryInfo.toString());
+        JsonArray responseMessage = getMessagessList(responseBody);
+        System.out.println(responseMessage.toString());
 
-        System.out.println(countryInfo.getAsJsonObject().get("name").toString().replace("\"", "") + " " + countryInfo.getAsJsonObject().get(alpha2Code) + " " + countryInfo.getAsJsonObject().get(alpha3Code));
+        JsonElement countryInfo = getCountryInfo(resultsList, 1);
+        System.out.println(getCountryInfo(resultsList, 1).toString());
+
+
+        System.out.println(getCountryParameterValue(countryInfo, NAME));
+        System.out.println(getCountryParameterValue(countryInfo, ALPHA2CODE));
+        System.out.println(getCountryParameterValue(countryInfo, ALPHA3CODE));
 
         System.out.println(5);
 
+    }
+
+    private JsonArray getResultsList(JsonElement responseBody) {
+        return responseBody.getAsJsonObject().get(RESTRESPONSE).getAsJsonObject().get(RESULT).getAsJsonArray();
+    }
+
+    private JsonArray getMessagessList(JsonElement responseBody) {
+        return responseBody.getAsJsonObject().get(RESTRESPONSE).getAsJsonObject().get(MESSAGES).getAsJsonArray();
+    }
+
+    private JsonElement getResponseBody(HttpURLConnection connection) throws IOException {
+        BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        return new JsonParser().parse(new JsonReader(rd));
+    }
+
+    private HttpURLConnection initHttpURLConnection(String urlSearchParameter, String GET, String baseURL) throws IOException {
+        URL url = new URL(baseURL + urlSearchParameter);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod(GET);
+        return connection;
+    }
+
+    private JsonElement getCountryInfo(JsonArray resultsList, int element) {
+        JsonElement countryInfo = resultsList.get(element);
+        return countryInfo;
+    }
+
+    private String getCountryParameterValue(JsonElement countryInfo, String parameterName) {
+        return getCountryParameter(countryInfo, parameterName).toString().replace("\"", "");
+    }
+
+    private JsonElement getCountryParameter(JsonElement countryInfo, String parameterName) {
+        return countryInfo.getAsJsonObject().get(parameterName);
     }
 }
 
