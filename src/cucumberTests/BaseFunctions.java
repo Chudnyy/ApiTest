@@ -62,9 +62,8 @@ public class BaseFunctions {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        JsonElement responseBody = new JsonParser()
+        return new JsonParser()
                 .parse(new JsonReader(bufferedReader));
-        return responseBody;
     }
 
     public HttpURLConnection initHttpConnection(String urlSearchParameter, String searchValue) {
@@ -89,10 +88,10 @@ public class BaseFunctions {
         return connection;
     }
 
+    //TODO: change method to get random country info from list
     public JsonElement getFirstCountryInfo(HttpURLConnection connection) {
         resultList = getResultsList(connection);
-        JsonElement countryInfo = resultList.get(0);
-        return countryInfo;
+        return resultList.get(0);
     }
 
     public String getCountryParameterValueFromCountryInfo(JsonElement countryInfo, String parameterName) {
